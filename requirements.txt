@@ -2,3 +2,4 @@ flask
 tensorflow
 nltk
 numpy
+pandas
