@@ -1,7 +1,8 @@
 
 # File: app.py
 
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
+import pandas as pd
 import json
 import random
 import numpy as np
@@ -16,6 +17,9 @@ nltk.download('wordnet')
 
 # Init app
 app = Flask(__name__)
+
+# Load music data from CSV
+music_data = pd.read_csv('files required/music_data.csv')
 
 # Load assets
 base_path = os.path.dirname(os.path.abspath(__file__))
@@ -63,13 +67,26 @@ def get_response(intents_list, intents_json):
 def home():
     return render_template("index.html")
 
-@app.route("/chat")
+@app.route("/chat", methods=["POST"])
 def chat():
-    msg = request.args.get("msg")
-    if not msg:
-        return jsonify({"error": "Missing 'msg' parameter"})
-    intents_list = predict_class(msg)
-    response = get_response(intents_list, intents)
+    user_input = request.json.get("message")
+    if not user_input:
+        return jsonify({"error": "Missing 'message' parameter"})
+    
+    # Extract mood and preferences
+    mood = "happy"  # Placeholder for mood extraction logic
+    preferences = {"artist": "unknown", "genre": "pop", "tempo": "medium"}  # Placeholder for preference extraction logic
+    
+    # Match preferences with music data
+    matched_tracks = music_data[
+        (music_data["genre"] == preferences["genre"]) &
+        (music_data["tempo"] == preferences["tempo"])
+    ]
+    
+    if matched_tracks.empty:
+        return jsonify({"response": "No matching tracks found."})
+    
+    response = matched_tracks.sample(1).to_dict(orient="records")[0]
     return jsonify({"response": response})
 
 if __name__ == "__main__":
